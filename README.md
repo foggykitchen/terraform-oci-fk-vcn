@@ -2,7 +2,7 @@
 
 This repository contains a reusable **Terraform/OpenTofu module** and progressive examples for deploying an **Oracle Cloud Infrastructure (OCI) Virtual Cloud Network (VCN)** with **subnets** and core network primitives, designed for real-world cloud architectures and hands-on learning.
 
-It is part of the **[FoggyKitchen.com training ecosystem](https://foggykitchen.com/courses-2/)** and serves as a foundational building block for OCI and multicloud courses, including **OKE**, private connectivity, and advanced networking scenarios.
+It is part of the **[FoggyKitchen.com training ecosystem](https://foggykitchen.com/)** and serves as a foundational building block for OCI and multicloud courses, including **OKE**, private connectivity, and advanced networking scenarios.
 
 Support expectations are documented in [SUPPORT.md](SUPPORT.md).
 
