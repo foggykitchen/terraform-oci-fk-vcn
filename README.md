@@ -272,6 +272,11 @@ This makes the module ideal for:
 
 ---
 
+## Related technical articles
+
+- [OCI Terraform Modules: Compose VCN, Compute and Load Balancing](https://foggykitchen.com/2026/05/18/oci-terraform-modules-vcn-compute-load-balancer/)
+  — Compose VCN, Compute and Load Balancer modules, with private backends, instance pools, health checks and autoscaling.
+
 ## 🪪 License
 
 Licensed under the **Universal Permissive License (UPL), Version 1.0**.  
