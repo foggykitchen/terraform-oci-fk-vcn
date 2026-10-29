@@ -90,7 +90,7 @@ Every example provides a `terraform.tfvars.example` template. Keep real variable
 
 ```hcl
 module "vcn" {
-  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.1.0"
+  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.2.0"
 
   compartment_ocid = var.compartment_ocid
   name             = "fk-vcn-demo"
@@ -246,7 +246,7 @@ subnets = {
 }
 ```
 
-This snippet requires the local checkout or a new release. The published `v0.1.0` used by the original usage example retains its original interface. See the runnable local example in [`examples/03-custom-dhcp-options`](examples/03-custom-dhcp-options).
+Custom DHCP is available in `v0.2.0` and newer, or in the local checkout. The `v0.1.0` tag retains its original interface. See the runnable local example in [`examples/03-custom-dhcp-options`](examples/03-custom-dhcp-options).
 
 ```hcl
 dhcp_options = map(object({

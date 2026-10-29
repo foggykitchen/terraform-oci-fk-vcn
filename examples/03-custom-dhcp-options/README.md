@@ -30,7 +30,7 @@ tofu output
 
 Keep credentials and state private. Review `tofu plan -destroy` and use `tofu destroy` when finished.
 
-This feature is in the local checkout; the existing published `v0.1.0` tag does not include it. See the [DHCP contract and compatibility notes](../../README.md#custom-dhcp-options) and [all examples](../README.md).
+Custom DHCP is included in `v0.2.0` and newer. This example uses the local checkout; the older `v0.1.0` tag does not include this feature. See the [DHCP contract and compatibility notes](../../README.md#custom-dhcp-options) and [all examples](../README.md).
 
 ## Support and license
 
