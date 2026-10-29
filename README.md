@@ -35,6 +35,7 @@ The module creates:
 - Optional Service Gateway
 - Optional Route Tables
 - Optional Security Lists
+- Optional custom DHCP option sets, selected explicitly by subnet key
 
 The module intentionally does **not** create:
 - OKE clusters
@@ -54,6 +55,7 @@ Each of those concerns belongs in its own dedicated module.
 terraform-oci-fk-vcn/
 ├── examples/
 │   ├── 01-basic-vcn/
+│   ├── 03-custom-dhcp-options/
 │   └── README.md
 ├── main.tf
 ├── variables.tf
@@ -172,6 +174,7 @@ module "vcn" {
 | `extra_network_entity_ids` | `map(string)` | ❌ | Extra route target IDs, for example DRG or LPG |
 | `route_tables` | `map(object)` | ❌ | Route table definitions |
 | `security_lists` | `map(object)` | ❌ | Security list definitions |
+| `dhcp_options` | `map(object)` | ❌ | Custom DHCP option sets; defaults to `{}` |
 
 ### Subnet object schema
 
@@ -181,6 +184,7 @@ subnets = map(object({
   display_name                  = optional(string)
   dns_label                     = optional(string)
   dhcp_options_id               = optional(string)
+  dhcp_options_key              = optional(string)
   route_table_key               = optional(string)
   route_table_id                = optional(string)
   security_list_keys            = optional(list(string), [])
@@ -192,6 +196,76 @@ subnets = map(object({
   freeform_tags                 = optional(map(string), {})
 }))
 ```
+
+### Custom DHCP options
+
+`dhcp_options` is an opt-in map. A set is associated with a subnet only through `dhcp_options_key`; existing `dhcp_options_id` inputs continue to work. The VCN-generated default DHCP options are never modified.
+
+```hcl
+dhcp_options = {
+  application = {
+    display_name        = "FoggyKitchenDHCPOptions1"
+    server_type         = "VcnLocalPlusInternet" # default
+    search_domain_names = ["foggykitchen.com"]
+  }
+  custom_dns = {
+    server_type        = "CustomDnsServer"
+    custom_dns_servers = ["10.20.0.10", "10.20.0.11"]
+  }
+}
+
+subnets = {
+  app = {
+    cidr_block       = "10.20.1.0/24"
+    dhcp_options_key = "application"
+  }
+  existing = {
+    cidr_block      = "10.20.2.0/24"
+    dhcp_options_id = var.existing_dhcp_options_id
+  }
+  default = {
+    cidr_block = "10.20.3.0/24"
+  }
+}
+```
+
+This snippet requires the local checkout or a new release. The published `v0.1.0` used by the original usage example retains its original interface. See the runnable local example in [`examples/03-custom-dhcp-options`](examples/03-custom-dhcp-options).
+
+```hcl
+dhcp_options = map(object({
+  display_name        = optional(string)
+  domain_name_type    = optional(string)
+  server_type         = optional(string, "VcnLocalPlusInternet")
+  custom_dns_servers  = optional(list(string), [])
+  search_domain_names = optional(list(string), [])
+  defined_tags        = optional(map(string), {})
+  freeform_tags       = optional(map(string), {})
+}))
+```
+
+- `VcnLocalPlusInternet` uses OCI DNS and must not specify custom DNS servers. `VcnLocal` is reserved by OCI and is not accepted.
+- `CustomDnsServer` requires one to three IP addresses. The module configures DHCP clients; it does not create DNS servers or their network connectivity.
+- `search_domain_names` accepts zero or one non-empty domain. An empty list omits `SearchDomain` entirely, following the [OCI provider contract](https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/latest/docs/r/core_dhcp_options.html).
+- Per-set tags override matching module tags. The default display name is `<name>-<key>-dhcp`.
+- A subnet can use a managed `dhcp_options_key` or external `dhcp_options_id`, not both. Unknown keys fail with a subnet-specific diagnostic.
+- `domain_name_type` is optional and passed through to OCI. Leaving it unset preserves provider/service defaults.
+
+### Backward compatibility and migration
+
+Existing inputs, resource addresses and output names remain unchanged, including the object shape of the `subnets` output. Runtime/provider version constraints are unchanged. Omitting `dhcp_options` (or passing null) creates no custom DHCP resources. Omitting both subnet selectors retains the previous default-DHCP behavior. `default_dhcp_options_id` still returns the VCN-generated default, never a custom set.
+
+New outputs are `dhcp_options_ids` and `subnet_dhcp_options_ids`. Custom sets have stable addresses `oci_core_dhcp_options.this["<key>"]`.
+
+To migrate an equivalent caller-managed DHCP resource, define a matching map entry and subnet key, remove the old resource block and place this move in the **caller configuration**:
+
+```hcl
+moved {
+  from = oci_core_dhcp_options.FoggyKitchenDhcpOptions1
+  to   = module.vcn.oci_core_dhcp_options.this["application"]
+}
+```
+
+Keep names, DNS/search-domain options, domain-name type and tags aligned with the existing resource. Back up state and review `tofu plan`. Renaming a map key requires its own move. To adopt a resource not already in that state, use `tofu import` instead. Clients may need to renew DHCP leases after deliberate configuration changes.
 
 ### Route table object schema
 
@@ -227,7 +301,9 @@ For Service Gateway route rules, the module supports `destination = "all-service
 | `vcn_cidr_blocks` | VCN CIDR blocks |
 | `default_route_table_id` | Default VCN route table OCID |
 | `default_security_list_id` | Default VCN security list OCID |
-| `default_dhcp_options_id` | Default VCN DHCP options OCID |
+| `default_dhcp_options_id` | Default VCN DHCP options OCID (unchanged) |
+| `dhcp_options_ids` | Map of custom DHCP option set key to OCID |
+| `subnet_dhcp_options_ids` | Map of subnet key to resolved DHCP options OCID |
 | `internet_gateway_id` | Internet Gateway OCID, if created |
 | `nat_gateway_id` | NAT Gateway OCID, if created |
 | `service_gateway_id` | Service Gateway OCID, if created |
@@ -245,6 +321,7 @@ For Service Gateway route rules, the module supports `destination = "all-service
 | Example | Description |
 |-------|-------------|
 | `01-basic-vcn` | Minimal OCI VCN with one public subnet, Internet Gateway, and route table |
+| `03-custom-dhcp-options` | Custom DNS/search-domain options selected per subnet alongside unchanged default DHCP |
 
 See [`examples/`](examples) for details.
 
@@ -276,6 +353,19 @@ This makes the module ideal for:
 
 - [OCI Terraform Modules: Compose VCN, Compute and Load Balancing](https://foggykitchen.com/2026/05/18/oci-terraform-modules-vcn-compute-load-balancer/)
   — Compose VCN, Compute and Load Balancer modules, with private backends, instance pools, health checks and autoscaling.
+
+## Validation
+
+Run with OpenTofu from the module root:
+
+```sh
+tofu init -backend=false
+tofu fmt -recursive -check
+tofu validate
+tofu test
+```
+
+The 15 DHCP tests use a mock OCI provider and plan-only runs, with no credentials or cloud resources. They cover legacy defaults/external IDs, managed and mixed subnet associations, DNS/search domains, tag inheritance and invalid inputs. See [`tests/README.md`](tests/README.md). The tests use a mock-capable OpenTofu release; the module keeps its existing Terraform/OpenTofu runtime constraint.
 
 ## 🪪 License
 

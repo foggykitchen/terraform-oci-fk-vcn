@@ -14,6 +14,7 @@ and multicloud courses covering networking, Kubernetes, and infrastructure autom
 | Example | Title | Key Topics |
 |:-------:|:------|:-----------|
 | 01 | **Basic VCN** | Minimal VCN with one public subnet, Internet Gateway, and route table |
+| 03 | **[Custom DHCP options](03-custom-dhcp-options)** | Opt-in custom DNS/search domains and unchanged default DHCP behavior |
 
 Each example builds on the **concepts** introduced in the previous one, but can be applied
 independently for learning and experimentation.
