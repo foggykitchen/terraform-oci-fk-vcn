@@ -182,6 +182,32 @@ resource "oci_core_security_list" "this" {
   freeform_tags = var.freeform_tags
 }
 
+resource "oci_core_dhcp_options" "this" {
+  for_each = var.dhcp_options
+
+  compartment_id   = var.compartment_ocid
+  vcn_id           = oci_core_vcn.this.id
+  display_name     = coalesce(each.value.display_name, "${var.name}-${each.key}-dhcp")
+  domain_name_type = each.value.domain_name_type
+
+  options {
+    type               = "DomainNameServer"
+    server_type        = each.value.server_type
+    custom_dns_servers = each.value.server_type == "CustomDnsServer" ? each.value.custom_dns_servers : null
+  }
+
+  dynamic "options" {
+    for_each = length(each.value.search_domain_names) > 0 ? [each.value.search_domain_names] : []
+    content {
+      type                = "SearchDomain"
+      search_domain_names = options.value
+    }
+  }
+
+  defined_tags  = merge(var.defined_tags, each.value.defined_tags)
+  freeform_tags = merge(var.freeform_tags, each.value.freeform_tags)
+}
+
 resource "oci_core_subnet" "this" {
   for_each = var.subnets
 
@@ -191,7 +217,7 @@ resource "oci_core_subnet" "this" {
   cidr_block     = each.value.cidr_block
   dns_label      = try(each.value.dns_label, null)
 
-  dhcp_options_id            = try(each.value.dhcp_options_id, null)
+  dhcp_options_id            = each.value.dhcp_options_key != null ? try(oci_core_dhcp_options.this[each.value.dhcp_options_key].id, null) : try(each.value.dhcp_options_id, null)
   prohibit_internet_ingress  = try(each.value.prohibit_internet_ingress, false)
   prohibit_public_ip_on_vnic = try(each.value.prohibit_public_ip_on_vnic, true)
 
@@ -205,4 +231,11 @@ resource "oci_core_subnet" "this" {
 
   defined_tags  = try(each.value.defined_tags, {})
   freeform_tags = try(each.value.freeform_tags, {})
+
+  lifecycle {
+    precondition {
+      condition     = each.value.dhcp_options_key == null ? true : contains(keys(var.dhcp_options), each.value.dhcp_options_key)
+      error_message = "Subnet ${each.key}: dhcp_options_key must reference a key in dhcp_options."
+    }
+  }
 }

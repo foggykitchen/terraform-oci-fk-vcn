@@ -92,3 +92,17 @@ output "subnets" {
     }
   }
 }
+
+output "dhcp_options_ids" {
+  description = "Map of custom DHCP option set key to OCID. Empty when no custom sets are requested."
+  value = {
+    for key, options in oci_core_dhcp_options.this : key => options.id
+  }
+}
+
+output "subnet_dhcp_options_ids" {
+  description = "Map of subnet key to its resolved DHCP options OCID."
+  value = {
+    for key, subnet in oci_core_subnet.this : key => subnet.dhcp_options_id
+  }
+}

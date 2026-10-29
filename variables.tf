@@ -134,6 +134,58 @@ variable "security_lists" {
   default = {}
 }
 
+variable "dhcp_options" {
+  description = "Map of custom DHCP option sets to create. Reference a set from a subnet with dhcp_options_key. Empty by default; the VCN default DHCP options are not modified."
+  type = map(object({
+    display_name        = optional(string)
+    domain_name_type    = optional(string)
+    server_type         = optional(string, "VcnLocalPlusInternet")
+    custom_dns_servers  = optional(list(string), [])
+    search_domain_names = optional(list(string), [])
+    defined_tags        = optional(map(string), {})
+    freeform_tags       = optional(map(string), {})
+  }))
+  default  = {}
+  nullable = false
+
+  validation {
+    condition = alltrue([
+      for options in values(var.dhcp_options) :
+      contains(["VcnLocalPlusInternet", "CustomDnsServer"], options.server_type)
+    ])
+    error_message = "Each DHCP server_type must be VcnLocalPlusInternet or CustomDnsServer."
+  }
+
+  validation {
+    condition = alltrue([
+      for options in values(var.dhcp_options) :
+      options.server_type == "CustomDnsServer" ? (
+        length(options.custom_dns_servers) >= 1 && length(options.custom_dns_servers) <= 3
+      ) : length(options.custom_dns_servers) == 0
+    ])
+    error_message = "CustomDnsServer requires one to three custom_dns_servers; VcnLocalPlusInternet must not specify custom_dns_servers."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for options in values(var.dhcp_options) : [
+        for server in options.custom_dns_servers : can(cidrhost("${server}/32", 0))
+      ]
+    ]))
+    error_message = "Each custom DNS server must be an IP address."
+  }
+
+  validation {
+    condition = alltrue([
+      for options in values(var.dhcp_options) :
+      length(options.search_domain_names) <= 1 && alltrue([
+        for domain in options.search_domain_names : try(length(trimspace(domain)) > 0, false)
+      ])
+    ])
+    error_message = "search_domain_names must be empty or contain one non-empty search domain."
+  }
+}
+
 variable "subnets" {
   description = "Map of subnets to create."
   type = map(object({
@@ -141,6 +193,7 @@ variable "subnets" {
     display_name                  = optional(string)
     dns_label                     = optional(string)
     dhcp_options_id               = optional(string)
+    dhcp_options_key              = optional(string)
     route_table_key               = optional(string)
     route_table_id                = optional(string)
     security_list_keys            = optional(list(string), [])
@@ -152,4 +205,12 @@ variable "subnets" {
     freeform_tags                 = optional(map(string), {})
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for subnet in values(var.subnets) :
+      subnet.dhcp_options_key == null || subnet.dhcp_options_id == null
+    ])
+    error_message = "A subnet must not set both dhcp_options_key and dhcp_options_id."
+  }
 }
