@@ -1,98 +1,54 @@
 # Example 01: Basic OCI VCN
 
-In this first example, we deploy a **minimal Oracle Cloud Infrastructure (OCI) Virtual Cloud Network (VCN)** using **Terraform/OpenTofu**.
-All core networking resources are created from scratch: **VCN, Internet Gateway, Route Table, and a single public Subnet**.
-This makes it a good starting point for anyone learning OCI networking or Infrastructure as Code.
+Deploy the network foundation with the local `terraform-oci-fk-vcn` checkout. This example creates one VCN, one regional public subnet, an Internet Gateway and a route table pointing `0.0.0.0/0` at that gateway. It uses the VCN's default security list and DHCP options.
 
-This example is intentionally simple and focuses only on the **networking foundation**,
-without compute instances, load balancers, NAT Gateway, or Service Gateway.
+## Architecture
 
----
+<img src="01-basic-vcn-oci-architecture.png" width="900" alt="Basic VCN architecture"/>
 
-## 🧭 Architecture Overview
+| Component | Configuration |
+| --- | --- |
+| VCN | `foggykitchen-vcn`, `10.20.0.0/16` |
+| Public subnet | `foggykitchen-subnet`, `10.20.10.0/24` |
+| Default route | Internet Gateway |
+| DHCP | VCN-generated default |
 
-<img src="01-basic-vcn-oci-architecture.png" width="900"/>
+The example creates no compute instance, load balancer, OKE cluster, NAT Gateway or Service Gateway. Example [02](../02-oke-networking-integration/README.md) adds a Kubernetes workload; example [03](../03-custom-dhcp-options/README.md) demonstrates custom DHCP.
 
-This deployment creates:
-- A new **VCN** named `foggykitchen-vcn`.
-- A single **public subnet** named `foggykitchen-subnet`.
-- One **Internet Gateway** attached to the VCN.
-- One **public route table** with a default route to the Internet Gateway.
+## Run with OpenTofu
 
-There are no Security Lists customizations, NAT Gateway, Service Gateway, or private subnets in this example.
-The goal is to understand the **absolute basics of OCI VCN provisioning**.
+Use OpenTofu >= 1.6 and OCI API-key credentials with network permissions. See the [authentication instructions](../README.md#requirements-and-authentication).
 
----
-
-## 🚀 Deployment Steps
-
-Initialize and apply the Terraform/OpenTofu configuration:
-
-```bash
+```sh
+cp terraform.tfvars.example terraform.tfvars
+# Edit the copied file with your OCI configuration.
 tofu init
-tofu plan
-tofu apply
+tofu fmt -check
+tofu validate
+tofu plan -out=basic-vcn.tfplan
+# Review before deployment.
+tofu apply basic-vcn.tfplan
+tofu output
 ```
 
-After a successful deployment, Terraform will output:
-- The VCN ID
-- The Subnet IDs map
+Outputs are `vcn_id` and the `subnet_ids` map. This example uses its own state; it does not update another example's deployment.
 
-These outputs can be used in later examples as networking building blocks.
+## OCI Console illustrations
 
----
+These screenshots illustrate the basic VCN layout; names and console appearance can vary.
 
-## 🖼️ OCI Console View
+<img src="01-basic-vcn-oci-console-01.png" width="900" alt="VCN in OCI Console"/>
+<img src="01-basic-vcn-oci-console-02.png" width="900" alt="Public subnet in OCI Console"/>
+<img src="01-basic-vcn-oci-console-03.png" width="900" alt="Internet route in OCI Console"/>
 
-Below you can see the resulting VCN, subnet, and route table
-as displayed in the OCI Console:
+## Cleanup
 
-<img src="01-basic-vcn-oci-console-01.png" width="900"/>
+Review `tofu plan -destroy` and run `tofu destroy` when finished. Keep credentials, variable files, state and plans private.
 
-<img src="01-basic-vcn-oci-console-02.png" width="900"/>
+[All examples](../README.md) · [Module contract](../../README.md)
 
-<img src="01-basic-vcn-oci-console-03.png" width="900"/>
+## Support and license
 
-After deployment, you should see:
-- A single VCN with CIDR block `10.20.0.0/16`
-- One public subnet with CIDR block `10.20.10.0/24`
-- One route table with `0.0.0.0/0` routed through the Internet Gateway
-
-This is a minimal OCI network layout with public connectivity.
-
----
-
-## 🧹 Cleanup
-
-To remove all resources created by this example:
-
-```bash
-tofu destroy
-```
-
----
-
-## ✅ Summary
-
-This example demonstrates:
-- How to create a **basic OCI VCN** using Terraform/OpenTofu
-- How VCN and subnet CIDR blocks are defined in OCI
-- How to expose a subnet to the internet using an **Internet Gateway** and **Route Table**
-- The foundation upon which more advanced scenarios can be built
-
----
-
-## 🌐 Learn More
-
-Visit [FoggyKitchen.com](https://foggykitchen.com/) for OCI, multicloud, and Terraform/OpenTofu learning resources.
-
----
-
-## 🪪 License
-
-Licensed under the **Universal Permissive License (UPL), Version 1.0**.  
-See [LICENSE](../../LICENSE) for more details.
-
----
+See the [support policy](../../SUPPORT.md) and [UPL license](../../LICENSE).
 
 © 2026 [FoggyKitchen.com](https://foggykitchen.com) - Cloud. Code. Clarity.

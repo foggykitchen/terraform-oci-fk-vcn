@@ -55,6 +55,7 @@ Each of those concerns belongs in its own dedicated module.
 terraform-oci-fk-vcn/
 ├── examples/
 │   ├── 01-basic-vcn/
+│   ├── 02-oke-networking-integration/
 │   ├── 03-custom-dhcp-options/
 │   └── README.md
 ├── main.tf
@@ -65,7 +66,23 @@ terraform-oci-fk-vcn/
 └── README.md
 ```
 
-All examples are runnable and demonstrate **incremental network design**, starting from the simplest public VCN layout.
+Examples **01, 02 and 03** are independent root configurations with their own state. Example 02 creates an OKE workload on networking supplied by this module; example 03 focuses on custom DHCP. Use OpenTofu to initialize and validate each example. Actual deployment depends on OCI permissions, quotas and regional service availability.
+
+## Run an example
+
+```sh
+cd examples/01-basic-vcn
+cp terraform.tfvars.example terraform.tfvars
+# Edit your OCI API-key inputs, compartment and region.
+tofu init
+tofu fmt -check
+tofu validate
+tofu plan -out=example.tfplan
+# Review before deploying.
+tofu apply example.tfplan
+```
+
+Every example provides a `terraform.tfvars.example` template. Keep real variable files, API keys, state, kubeconfig and plans out of Git. For example 02, review `k8s_version` against the target region and the public endpoint/node network configuration. See the [examples index](examples/README.md) for the full sequence and cleanup instructions.
 
 ---
 
@@ -320,10 +337,11 @@ For Service Gateway route rules, the module supports `destination = "all-service
 
 | Example | Description |
 |-------|-------------|
-| `01-basic-vcn` | Minimal OCI VCN with one public subnet, Internet Gateway, and route table |
-| `03-custom-dhcp-options` | Custom DNS/search-domain options selected per subnet alongside unchanged default DHCP |
+| [`01-basic-vcn`](examples/01-basic-vcn/README.md) | Minimal OCI VCN with one public subnet, Internet Gateway, and route table |
+| [`02-oke-networking-integration`](examples/02-oke-networking-integration/README.md) | Existing VCN/subnet integration with the pinned FoggyKitchen OKE module |
+| [`03-custom-dhcp-options`](examples/03-custom-dhcp-options/README.md) | Custom DNS/search-domain options selected per subnet alongside unchanged default DHCP |
 
-See [`examples/`](examples) for details.
+See the [examples index](examples/README.md) for requirements, inputs and links to all three examples.
 
 ---
 
@@ -344,8 +362,8 @@ This makes the module ideal for:
 
 ## 🧩 Related Modules & Training
 
-- [terraform-oci-fk-oke](https://github.com/mlinxfeld/terraform-oci-fk-oke)
-- [terraform-az-fk-vnet](https://github.com/mlinxfeld/terraform-az-fk-vnet)
+- [terraform-oci-fk-oke](https://github.com/foggykitchen/terraform-oci-fk-oke)
+- [terraform-az-fk-vnet](https://github.com/foggykitchen/terraform-az-fk-vnet)
 
 ---
 

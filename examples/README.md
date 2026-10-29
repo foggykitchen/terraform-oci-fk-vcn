@@ -1,75 +1,42 @@
-# OCI VCN with Terraform/OpenTofu - Training Examples
+# OCI VCN examples
 
-This directory contains all progressive examples used with the **terraform-oci-fk-vcn** module.
-The examples are designed as **incremental building blocks**, starting from a minimal OCI Virtual Cloud Network (VCN)
-and preparing the networking foundation for real-world workloads such as **OKE** and future private connectivity scenarios.
+Three independent examples show how to use `terraform-oci-fk-vcn`. Each directory owns its own configuration and state; they are not sequential state upgrades.
 
-These examples are part of the **[FoggyKitchen.com training ecosystem](https://foggykitchen.com/courses-2/)** and are used across OCI
-and multicloud courses covering networking, Kubernetes, and infrastructure automation.
+| Example | Focus | Resources |
+| --- | --- | --- |
+| [01: Basic VCN](01-basic-vcn/README.md) | Public network foundation | VCN, public subnet, Internet Gateway and route table |
+| [02: OKE networking integration](02-oke-networking-integration/README.md) | Compose networking and Kubernetes modules | VCN, three public subnets, Internet/Service Gateways, security lists, Basic OKE cluster and worker pool |
+| [03: Custom DHCP options](03-custom-dhcp-options/README.md) | Per-subnet DHCP selection | Two custom DHCP sets and three private subnets, including a subnet using VCN defaults |
 
----
+## Requirements and authentication
 
-## 🧭 Example Overview
+Use OpenTofu >= 1.6, Git, an OCI API signing key and permissions/quotas for the selected example. Network primitives use `oracle/oci ~> 6.0`. Example 02 also downloads the pinned OKE module; its Kubernetes version and worker shape must be available in your region.
 
-| Example | Title | Key Topics |
-|:-------:|:------|:-----------|
-| 01 | **Basic VCN** | Minimal VCN with one public subnet, Internet Gateway, and route table |
-| 03 | **[Custom DHCP options](03-custom-dhcp-options)** | Opt-in custom DNS/search domains and unchanged default DHCP behavior |
+Every example includes `terraform.tfvars.example` with tenancy/user OCIDs, fingerprint, private-key path, compartment OCID and region. Copy and edit the template, or use the corresponding `TF_VAR_` variables. Never commit actual credentials, variable files, state, plans or kubeconfig.
 
-Each example builds on the **concepts** introduced in the previous one, but can be applied
-independently for learning and experimentation.
+## Run independently
 
----
-
-## ⚙️ How to Use
-
-Each example directory contains:
-- Terraform/OpenTofu configuration (`.tf`)
-- A focused `README.md` explaining the goal of the example
-- A minimal, runnable architecture
-
-To run an example:
-
-```bash
-cd examples/01-basic-vcn
+```sh
+cd 01-basic-vcn # or 02-oke-networking-integration / 03-custom-dhcp-options
+cp terraform.tfvars.example terraform.tfvars
+# Edit the copied file.
 tofu init
-tofu plan
-tofu apply
+tofu fmt -check
+tofu validate
+tofu plan -out=example.tfplan
+# Review the proposed billable resources.
+tofu apply example.tfplan
+tofu output
 ```
 
-You can apply examples independently. As additional examples are added, the **recommended approach is sequential**.
+After using the lab, review `tofu plan -destroy` and run `tofu destroy` from that example's directory. Example 02 creates worker VMs and boot volumes. The examples' CIDRs overlap intentionally for separate labs; do not peer them without changing the address plan.
 
-This mirrors real-world network design, where complexity is added only when required.
+Module initialization and configuration validation do not prove OCI permissions, DNS reachability or OKE version availability. The root [DHCP test suite](../tests/README.md) uses mock OCI providers and creates no cloud resources.
 
----
+[Module contract and compatibility](../README.md)
 
-## 🧩 Design Principles
+## Support and license
 
-- One example = one architectural goal
-- No unused or placeholder resources
-- Clear separation of concerns
-- Networking designed to be consumed by other modules such as OKE
-
-These examples intentionally avoid:
-- Full landing zones
-- Opinionated enterprise frameworks
-- Hidden dependencies between examples
-
----
-
-## 🧩 Related Resources
-
-- [FoggyKitchen OCI VCN Module (terraform-oci-fk-vcn)](../)
-- [FoggyKitchen OCI OKE Module (terraform-oci-fk-oke)](https://github.com/mlinxfeld/terraform-oci-fk-oke)
-- [FoggyKitchen Azure VNet Module (terraform-az-fk-vnet)](https://github.com/mlinxfeld/terraform-az-fk-vnet)
-
----
-
-## 🪪 License
-
-Licensed under the **Universal Permissive License (UPL), Version 1.0**.  
-See [LICENSE](../LICENSE) for details.
-
----
+See the [support policy](../SUPPORT.md) and [UPL license](../LICENSE).
 
 © 2026 [FoggyKitchen.com](https://foggykitchen.com) - Cloud. Code. Clarity.

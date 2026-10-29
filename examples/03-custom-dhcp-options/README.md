@@ -1,4 +1,4 @@
-# Custom DHCP options
+# Example 03: Custom DHCP options
 
 This example uses the local VCN module to create two opt-in DHCP sets and three private subnets:
 
@@ -9,6 +9,8 @@ This example uses the local VCN module to create two opt-in DHCP sets and three 
 | `default_dns_clients` | Unchanged VCN default DHCP options |
 
 This configures DHCP, not DNS servers, instances or gateways. Replace the sample DNS addresses with reachable resolvers and configure routing/security for your consumers. A search domain is a client suffix; it does not create a private DNS zone. Additional subnets can share a set by reusing its key.
+
+The VCN module is taken from `../..`, so this example exercises the checked-out code. Examples [01](../01-basic-vcn/README.md) and [02](../02-oke-networking-integration/README.md) use the same module with default DHCP behavior.
 
 ## Run with OpenTofu
 
@@ -28,4 +30,10 @@ tofu output
 
 Keep credentials and state private. Review `tofu plan -destroy` and use `tofu destroy` when finished.
 
-This feature is in the local checkout; the existing published `v0.1.0` tag does not include it. See the [DHCP contract and compatibility notes](../../README.md#custom-dhcp-options), [support policy](../../SUPPORT.md) and [UPL license](../../LICENSE).
+This feature is in the local checkout; the existing published `v0.1.0` tag does not include it. See the [DHCP contract and compatibility notes](../../README.md#custom-dhcp-options) and [all examples](../README.md).
+
+## Support and license
+
+See the [support policy](../../SUPPORT.md) and [UPL license](../../LICENSE).
+
+© 2026 [FoggyKitchen.com](https://foggykitchen.com) - Cloud. Code. Clarity.
