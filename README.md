@@ -90,7 +90,7 @@ Every example provides a `terraform.tfvars.example` template. Keep real variable
 
 ```hcl
 module "vcn" {
-  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.2.1"
+  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.3.0"
 
   compartment_ocid = var.compartment_ocid
   name             = "fk-vcn-demo"
@@ -383,17 +383,8 @@ tofu validate
 tofu test
 ```
 
-The 15 DHCP tests use a mock OCI provider and plan-only runs, with no credentials or cloud resources. They cover legacy defaults/external IDs, managed and mixed subnet associations, DNS/search domains, tag inheritance and invalid inputs. See [`tests/README.md`](tests/README.md). The tests use a mock-capable OpenTofu release; the module keeps its existing Terraform/OpenTofu runtime constraint.
+The 15 DHCP tests use a mock OCI provider and plan-only runs, with no credentials or cloud resources. They cover legacy defaults/external IDs, managed and mixed subnet associations, DNS/search domains, tag inheritance and invalid inputs. See [`tests/README.md`](tests/README.md). The tests use a mock-capable OpenTofu release; the module requires OpenTofu >= 1.11.0.
 
-## OCI provider compatibility
-
-Starting with **v0.2.1**, the root module accepts `oracle/oci >= 6.0.0, < 10.0.0`, including OCI 9.x while preserving the existing OCI 6.x lower bound. No module inputs, outputs or resource addresses change.
-
-The compatibility CI matrix pins **6.37.0** and **9.12.1**, using OpenTofu **1.11.6** for validation and mock-capable test execution. The root suite contains 15 mocked, plan-only tests. Local checks on **2026-11-12** passed formatting, initialization, validation and all **15 root tests on each provider version**. Other provider versions within the allowed range have not been individually verified.
-
-The same resource configuration was exercised with OCI **9.12.1** in the BaseDB cross-region lab on **2026-11-12**. VCN routing and connectivity were verified in both directions between Frankfurt and Amsterdam. This verifies the lab's composition, not every optional module feature.
-
-Existing callers can keep OCI 6.x. A consuming stack must allow the selected provider version in every module and review its plan before upgrading. Standalone examples may retain independent OCI 6.x constraints and pinned dependency tags.
 
 ---
 
@@ -405,3 +396,18 @@ See [LICENSE](LICENSE) for details.
 ---
 
 © 2026 [FoggyKitchen.com](https://foggykitchen.com) - Cloud. Code. Clarity.
+
+## Requirements
+
+| Requirement | Version |
+|---|---|
+| OpenTofu | >= 1.11.0 (tested with 1.11.6) |
+| oracle/oci | >= 9.12.1, < 10.0.0 |
+
+## BREAKING: requires OCI provider >= 9.12.1
+
+OCI provider 6.x, 7.x and 8.x are no longer supported. Upgrade all composed modules together, run `tofu init -upgrade`, and review a plan before applying. Existing module inputs, outputs and resource addresses are preserved.
+
+Every embedded example is covered by a plan-only mocked test. CI uses OpenTofu 1.11.6 and exact OCI 9.12.1. Mocked plans verify configuration and expressions; they do not verify tenancy permissions, regional availability or service limits.
+
+Run the same checks locally with `python3 scripts/oci9_check.py --root .` (or an example path). The helper materializes synthetic IDs in a temporary copy. For unpublished integration branches only, `OCI9_ALLOW_UNRELEASED=1` permits an explicitly logged fallback from the proposed tag to `oci-provider-9`; released tags always take precedence. `--modules-dir /path/to/checkouts` tests local migrated dependencies.

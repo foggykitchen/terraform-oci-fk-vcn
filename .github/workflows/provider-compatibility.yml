@@ -1,36 +1,26 @@
-name: OCI provider compatibility
+name: OCI 9 compatibility
 on:
   push:
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  compatibility:
+  validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        oci: ["6.37.0", "9.12.1"]
+        root: ["examples/01-basic-vcn", "examples/02-oke-networking-integration", "examples/03-custom-dhcp-options", "."]
+    env:
+      TF_IN_AUTOMATION: "1"
+      TF_INPUT: "0"
+      OCI9_ALLOW_UNRELEASED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: 1.11.6
-      - name: Select provider version
-        env:
-          OCI_VERSION: ${{ matrix.oci }}
-        run: |
-          cat > provider_version_override.tf <<EOF
-          terraform {
-            required_providers {
-              oci = {
-                source = "oracle/oci"
-                version = "= ${OCI_VERSION}"
-              }
-            }
-          }
-          EOF
-          tofu fmt provider_version_override.tf
-      - run: tofu fmt -check
-      - run: tofu init -backend=false -input=false
-      - run: tofu validate
-      - run: tofu test
+          tofu_wrapper: false
+      - name: Format, initialize, validate and mocked plan
+        run: python3 scripts/oci9_check.py --root '${{ matrix.root }}'

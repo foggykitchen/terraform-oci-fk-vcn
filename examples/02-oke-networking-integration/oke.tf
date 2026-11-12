@@ -1,5 +1,5 @@
 module "oke" {
-  source = "git::https://github.com/foggykitchen/terraform-oci-fk-oke.git?ref=v0.3.0"
+  source = "git::https://github.com/foggykitchen/terraform-oci-fk-oke.git?ref=v0.4.0" # TODO: tag not yet released
 
   region                        = var.region
   tenancy_ocid                  = var.tenancy_ocid
