@@ -1,0 +1,36 @@
+name: OCI provider compatibility
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        oci: ["6.37.0", "9.12.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.6
+      - name: Select provider version
+        env:
+          OCI_VERSION: ${{ matrix.oci }}
+        run: |
+          cat > provider_version_override.tf <<EOF
+          terraform {
+            required_providers {
+              oci = {
+                source = "oracle/oci"
+                version = "= ${OCI_VERSION}"
+              }
+            }
+          }
+          EOF
+          tofu fmt provider_version_override.tf
+      - run: tofu fmt -check
+      - run: tofu init -backend=false -input=false
+      - run: tofu validate
+      - run: tofu test

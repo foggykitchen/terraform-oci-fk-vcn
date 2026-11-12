@@ -90,7 +90,7 @@ Every example provides a `terraform.tfvars.example` template. Keep real variable
 
 ```hcl
 module "vcn" {
-  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.2.0"
+  source = "git::https://github.com/foggykitchen/terraform-oci-fk-vcn.git?ref=v0.2.1"
 
   compartment_ocid = var.compartment_ocid
   name             = "fk-vcn-demo"
@@ -269,7 +269,7 @@ dhcp_options = map(object({
 
 ### Backward compatibility and migration
 
-Existing inputs, resource addresses and output names remain unchanged, including the object shape of the `subnets` output. Runtime/provider version constraints are unchanged. Omitting `dhcp_options` (or passing null) creates no custom DHCP resources. Omitting both subnet selectors retains the previous default-DHCP behavior. `default_dhcp_options_id` still returns the VCN-generated default, never a custom set.
+Existing inputs, resource addresses and output names remain unchanged, including the object shape of the `subnets` output. The DHCP feature preserves the runtime constraint; provider compatibility for the current release is described below. Omitting `dhcp_options` (or passing null) creates no custom DHCP resources. Omitting both subnet selectors retains the previous default-DHCP behavior. `default_dhcp_options_id` still returns the VCN-generated default, never a custom set.
 
 New outputs are `dhcp_options_ids` and `subnet_dhcp_options_ids`. Custom sets have stable addresses `oci_core_dhcp_options.this["<key>"]`.
 
@@ -384,6 +384,18 @@ tofu test
 ```
 
 The 15 DHCP tests use a mock OCI provider and plan-only runs, with no credentials or cloud resources. They cover legacy defaults/external IDs, managed and mixed subnet associations, DNS/search domains, tag inheritance and invalid inputs. See [`tests/README.md`](tests/README.md). The tests use a mock-capable OpenTofu release; the module keeps its existing Terraform/OpenTofu runtime constraint.
+
+## OCI provider compatibility
+
+Starting with **v0.2.1**, the root module accepts `oracle/oci >= 6.0.0, < 10.0.0`, including OCI 9.x while preserving the existing OCI 6.x lower bound. No module inputs, outputs or resource addresses change.
+
+The compatibility CI matrix pins **6.37.0** and **9.12.1**, using OpenTofu **1.11.6** for validation and mock-capable test execution. The root suite contains 15 mocked, plan-only tests. Local checks on **2026-11-12** passed formatting, initialization, validation and all **15 root tests on each provider version**. Other provider versions within the allowed range have not been individually verified.
+
+The same resource configuration was exercised with OCI **9.12.1** in the BaseDB cross-region lab on **2026-11-12**. VCN routing and connectivity were verified in both directions between Frankfurt and Amsterdam. This verifies the lab's composition, not every optional module feature.
+
+Existing callers can keep OCI 6.x. A consuming stack must allow the selected provider version in every module and review its plan before upgrading. Standalone examples may retain independent OCI 6.x constraints and pinned dependency tags.
+
+---
 
 ## 🪪 License
 
