@@ -49,6 +49,7 @@ Each of those concerns belongs in its own dedicated module.
 terraform-oci-fk-vcn/
 ├── examples/
 │   ├── 01-basic-vcn/
+│   ├── 02-oke-networking-integration/
 │   ├── 03-custom-dhcp-options/
 │   └── README.md
 ├── main.tf
@@ -315,6 +316,7 @@ For Service Gateway route rules, the module supports `destination = "all-service
 | Example | Description |
 |-------|-------------|
 | `01-basic-vcn` | Minimal OCI VCN with one public subnet, Internet Gateway, and route table |
+| `02-oke-networking-integration` | Reusable VCN foundation composed with `terraform-oci-fk-oke` for a basic OKE deployment |
 | `03-custom-dhcp-options` | Custom DNS/search-domain options selected per subnet alongside unchanged default DHCP |
 
 See [`examples/`](examples) for details.
@@ -364,3 +366,9 @@ See [LICENSE](LICENSE) for details.
 ---
 
 © 2026 [FoggyKitchen.com](https://foggykitchen.com) - Cloud. Code. Clarity.
+
+## OCI provider compatibility
+
+The root module accepts `oracle/oci >= 6.0.0, < 10.0.0`. Compatibility checks on 2026-11-09 passed with **6.37.0** and **9.12.1**. All **15 root module mock tests** passed on each version. The CI matrix checks both provider versions. Other versions within the allowed range have not been individually tested.
+
+This broadens the provider constraint without changing resource addresses or inputs. Existing deployments can retain OCI 6.x; upgrading a consuming stack requires compatible constraints in every module and review of its plan. Example configurations may still pin OCI 6.x independently. These checks do not constitute a live deployment test of this module on OCI 9.x.
