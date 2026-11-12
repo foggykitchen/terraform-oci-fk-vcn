@@ -10,7 +10,7 @@ Three independent examples show how to use `terraform-oci-fk-vcn`. Each director
 
 ## Requirements and authentication
 
-Use OpenTofu >= 1.6, Git, an OCI API signing key and permissions/quotas for the selected example. Network primitives use `oracle/oci ~> 6.0`. Example 02 also downloads the pinned OKE module; its Kubernetes version and worker shape must be available in your region.
+Use OpenTofu >= 1.6, Git, an OCI API signing key and permissions/quotas for the selected example. Network primitives use `oracle/oci >= 9.12.1, < 10.0.0`. Example 02 also downloads the pinned OKE module; its Kubernetes version and worker shape must be available in your region.
 
 Every example includes `terraform.tfvars.example` with tenancy/user OCIDs, fingerprint, private-key path, compartment OCID and region. Copy and edit the template, or use the corresponding `TF_VAR_` variables. Never commit actual credentials, variable files, state, plans or kubeconfig.
 
